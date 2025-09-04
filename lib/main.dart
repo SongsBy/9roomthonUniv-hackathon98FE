@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:remind/model/meeting_List_card_model.dart';
+import 'package:remind/repository/FeedbackRepository.dart';
+import 'package:remind/repository/meeting_repository.dart';
 import 'package:remind/repository/signin_repository.dart';
 import 'package:remind/repository/survey_result_repository.dart';
 import 'package:remind/screen/homescreen.dart';
@@ -10,6 +13,8 @@ final getIt = GetIt.instance;
 void setupLocator (){
   getIt.registerSingleton<SigninRepository>(SigninRepository());
   getIt.registerSingleton<SurveyResultRepository>(SurveyResultRepository());
+  getIt.registerSingleton<FeedbackRepository>(FeedbackRepository());
+  getIt.registerSingleton<MeetingRepository>(MeetingRepository());
 }
 
 void main() {

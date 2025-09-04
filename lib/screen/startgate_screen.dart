@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:remind/screen/login_screen.dart';
-import 'package:remind/screen/manual1_screen.dart';
 
 import '../const/color.dart';
 

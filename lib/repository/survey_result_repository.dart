@@ -5,7 +5,7 @@ class SurveyResultRepository {
   Future<EnergyStat> getSurveyResult()async{
     await Future.delayed(Duration(seconds: 3));
     return EnergyStat(
-        characterName:'작은 성공이 필요한 성실한 수달 타입',
+        characterName:'"작은 성공이 필요한"\n성실한 수달 타입',
         characterImagePath: 'assets/img/otter.png',
         mindEnergyValue: 70,
         bodyEnergyValue: 20,

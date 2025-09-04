@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:remind/component/survey_result_skeleton.dart';
 import 'package:remind/model/energy_stat_bodel.dart';
 import 'package:remind/repository/survey_result_repository.dart';
+import 'package:remind/screen/homescreen.dart';
 
 import '../const/color.dart';
 
@@ -56,21 +57,20 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
                   children: [
                     ///상단 텍스트
                     _TopText(),
+
                     ///감정 캐릭터 카드 섹션
                     _CardSection(resultData: resultData),
                     SizedBox(height: 20.0),
+
                     /// 하단 설명글 섹션
                     _BottomSection(
-                        resultData: resultData,
-                        onNextPressed: (){
-                          Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      Homescreen()
-                              )
-                          );
-                        }
-                        ),
+                      resultData: resultData,
+                      onNextPressed: () {
+                        Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute(builder: (_) => HomeScreen(resultData: resultData)));
+                      },
+                    ),
                   ],
                 );
               },
@@ -81,10 +81,6 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
     );
   }
 }
-
-
-
-
 
 ///상단 텍스트 위젯
 class _TopText extends StatelessWidget {
@@ -119,9 +115,18 @@ class _CardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediumText = Theme.of(context).textTheme.displayMedium;
     final List<StatData> stats = [
-      StatData(color: const Color(0XFF27B3AA), value: resultData.mindEnergyValue),
-      StatData(color: const Color(0XFFCDD2FD), value: resultData.bodyEnergyValue),
-      StatData(color: const Color(0XFFECECEC), value: resultData.relationEnergyValue),
+      StatData(
+        color: const Color(0XFF27B3AA),
+        value: resultData.mindEnergyValue,
+      ),
+      StatData(
+        color: const Color(0XFFCDD2FD),
+        value: resultData.bodyEnergyValue,
+      ),
+      StatData(
+        color: const Color(0XFFECECEC),
+        value: resultData.relationEnergyValue,
+      ),
     ];
 
     return SizedBox(
@@ -137,13 +142,20 @@ class _CardSection extends StatelessWidget {
             children: [
               Text(
                 '당신의 감정 캐릭터',
-                style: mediumText?.copyWith(fontSize: 20, fontWeight: FontWeight.w600),
+                style: mediumText?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Image.asset('assets/img/arrowLeft.png', width: 40, height: 40),
+                  Image.asset(
+                    'assets/img/arrowLeft.png',
+                    width: 40,
+                    height: 40,
+                  ),
                   Expanded(
                     child: Text(
                       resultData.characterName,
@@ -152,39 +164,46 @@ class _CardSection extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Image.asset('assets/img/arrowRight.png', width: 40, height: 40),
+                  Image.asset(
+                    'assets/img/arrowRight.png',
+                    width: 40,
+                    height: 40,
+                  ),
                 ],
               ),
               Center(
-                child: Image.asset(resultData.characterImagePath, width: 120, height: 120),
+                child: Image.asset(
+                  resultData.characterImagePath,
+                  width: 120,
+                  height: 120,
+                ),
               ),
               const SizedBox(height: 40),
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text('마음에너지'),
-                  Text('신체활력'),
-                  Text('관계 에너지'),
-                ],
+                children: [Text('마음에너지'), Text('신체활력'), Text('관계 에너지')],
               ),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: stats.map((e) => Row(
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: e.color,
-                        shape: BoxShape.circle,
+                children: stats
+                    .map(
+                      (e) => Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: e.color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${e.value}%'),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text('${e.value}%'),
-                  ],
-                ),
-                ).toList(),
+                    )
+                    .toList(),
               ),
             ],
           ),
@@ -200,9 +219,9 @@ class _BottomSection extends StatelessWidget {
   final VoidCallback onNextPressed;
 
   const _BottomSection({
-    required this.resultData, 
+    required this.resultData,
     required this.onNextPressed,
-    super.key
+    super.key,
   });
 
   @override
@@ -229,10 +248,7 @@ class _BottomSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 17),
           ),
           onPressed: onNextPressed,
-          child: Text(
-            '시작하기',
-            style: mediumText?.copyWith(color: Colors.white),
-          ),
+          child: Text('시작하기', style: mediumText?.copyWith(color: Colors.white)),
         ),
       ],
     );

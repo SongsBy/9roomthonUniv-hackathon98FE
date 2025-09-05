@@ -5,4 +5,4 @@
 - component
 - repository
 - screen
-- -const
+- const

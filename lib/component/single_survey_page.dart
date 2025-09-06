@@ -2,185 +2,176 @@ import 'package:flutter/material.dart';
 import 'package:remind/model/survey_question_model.dart';
 import '../const/color.dart';
 
-// --- 1. 부모 위젯: 상태 관리 및 조립 담당 ---
+
 class SingleSurveyPage extends StatefulWidget {
   final SurveyQuestionModel questionData;
   final int pageIndex;
   final int totalPages;
   final VoidCallback onNextPressed;
 
-  const SingleSurveyPage(
-      {required this.questionData,
-        required this.pageIndex,
-        required this.totalPages,
-        required this.onNextPressed,
-        super.key});
+  const SingleSurveyPage({
+    required this.questionData,
+    required this.pageIndex,
+    required this.totalPages,
+    required this.onNextPressed,
+    super.key,
+  });
 
   @override
   State<SingleSurveyPage> createState() => _SingleSurveyPageState();
 }
 
 class _SingleSurveyPageState extends State<SingleSurveyPage> {
-
   int? selectedIndex;
-
+  final List<String> imagePaths = [
+    'assets/img/hedgehog.png',
+    'assets/img/Octopus.png',
+    'assets/img/koala.png',
+    'assets/img/panda.png',
+    'assets/img/turtle.png',
+  ];
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ///상단 위젯
-        _TopSection(
-          imagePath: widget.questionData.imagePath,
-          pageIndex: widget.pageIndex,
-          totalPages: widget.totalPages,
-        ),
-        ///설문 위젯
-        _SurveySection(
-          questionData: widget.questionData,
-          selectedIndex: selectedIndex,
-          onNextPressed: widget.onNextPressed,
-          pageIndex: widget.pageIndex,
-          totalPages: widget.totalPages,
-
-          onOptionSelected: (int index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-        ),
-      ],
-    );
-  }
-}
-
-
-
-
-
-///상단위젯
-class _TopSection extends StatelessWidget {
-  final String imagePath;
-  final int pageIndex;
-  final int totalPages;
-
-  const _TopSection({
-    required this.imagePath,
-    required this.pageIndex,
-    required this.totalPages,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+    final progress =
+    widget.totalPages == 0 ? 0.0 : (widget.pageIndex + 1) / widget.totalPages;
     final mediumText = Theme.of(context).textTheme.displayMedium;
-    return Column(
-      children: [
-        SizedBox(height: 80),
-        Image.asset(imagePath, width: 150, height: 150),
-        SizedBox(height: 20),
-        Text(
-          '질문 ${pageIndex + 1} / $totalPages',
-          style: mediumText?.copyWith(
-            color: primaryColor,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        SizedBox(height: 40),
-      ],
-    );
-  }
-}
+    final currentImage = imagePaths[widget.pageIndex % imagePaths.length];
 
-/// 하단 위젯
-typedef OnOptionSelected = void Function(int index);
-class _SurveySection extends StatelessWidget {
-  final SurveyQuestionModel questionData;
-  final int? selectedIndex;
-  final OnOptionSelected onOptionSelected;
-  final VoidCallback onNextPressed;
-  final int pageIndex;
-  final int totalPages;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text('성향 분석'),
+        backgroundColor: Colors.white,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
 
-  const _SurveySection({
-    required this.questionData,
-    required this.selectedIndex,
-    required this.onOptionSelected,
-    required this.onNextPressed,
-    required this.pageIndex,
-    required this.totalPages,
-  });
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0.0, 1.0),
+                  minHeight: 10,
+                  backgroundColor: const Color(0xFFEAE6FF),
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Image.asset(currentImage,width: 120,height: 120,),
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isLastPage = pageIndex == totalPages - 1;
-    final mediumText = Theme.of(context).textTheme.displayMedium;
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-        decoration: BoxDecoration(
-          color: Color(0xFFE3DFFF),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              questionData.question,
-              style: mediumText?.copyWith(
-                  fontSize: 19, fontWeight: FontWeight.w400),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 40),
-            Column(
-              children: questionData.options.asMap().entries.map((entry) {
-                final index = entry.key;
-                final optionText = entry.value;
-
-                final defaultStyle = OutlinedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  minimumSize: Size(double.infinity, 50),
-                );
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: OutlinedButton(
-                    style: defaultStyle.copyWith(
-                      side: MaterialStateProperty.all(
-                        BorderSide(
-                          color: selectedIndex == index
-                              ? primaryColor
-                              : Colors.grey.shade300,
-                          width: 1.5,
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3DFFF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 18.0, vertical: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // 질문
+                      Text(
+                        widget.questionData.question,
+                        textAlign: TextAlign.center,
+                        style: mediumText?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black.withOpacity(0.9),
                         ),
                       ),
-                    ),
-                    onPressed: () {
+                      const SizedBox(height: 18),
 
-                      onOptionSelected(index);
-                    },
-                    child: Text(
-                      optionText,
-                      style: mediumText?.copyWith(fontSize: 15.7),
-                      textAlign: TextAlign.start,
-                    ),
+
+                      Expanded(
+                        child: Column(
+                          children: List.generate(4, (i) {
+                            // 옵션이 4개보다 적을 경우 빈 칸을 비활성으로 채움
+                            final hasOption =
+                                i < widget.questionData.options.length;
+                            final text = hasOption
+                                ? widget.questionData.options[i]
+                                : '';
+                            final selected = selectedIndex == i && hasOption;
+
+                            return Expanded(
+                              child: Padding(
+                                padding:
+                                const EdgeInsets.symmetric(vertical: 6.0),
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    side: BorderSide(
+                                      color: hasOption
+                                          ? (selected
+                                          ? primaryColor
+                                          : Colors.grey.shade300)
+                                          : Colors.grey.shade200,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  onPressed: hasOption
+                                      ? () => setState(() => selectedIndex = i)
+                                      : null,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      text,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: mediumText?.copyWith(
+                                        fontSize: 15.5,
+                                        color: hasOption
+                                            ? Colors.black
+                                            : Colors.grey.shade400,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // 다음 버튼
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: (selectedIndex == null ||
+                              selectedIndex! >=
+                                  widget.questionData.options.length)
+                              ? null
+                              : widget.onNextPressed,
+                          child: Text(
+                            '다음 설문',
+                            style:
+                            mediumText?.copyWith(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
-            Spacer(),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  minimumSize: Size(double.infinity, 50)),
-              onPressed: selectedIndex == null ? null : onNextPressed,
-              child:
-              Text(
-                 isLastPage ? '진단 시작하기' :'다음설문',
-                  style: mediumText?.copyWith(color: Colors.white)),
-            ),
-          ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

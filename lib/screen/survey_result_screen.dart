@@ -34,46 +34,48 @@ class _SurveyResultScreenState extends State<SurveyResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0XFFFAFAFA),
-      body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: FutureBuilder<EnergyStat>(
-              future: surveyResultFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  ///로딩 UI
-                  return const SurveyResultSkeleton();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return const Center(child: Text('데이터를 불러오는데 실패 했습니다'));
-                }
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: FutureBuilder<EnergyStat>(
+                future: surveyResultFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    ///로딩 UI
+                    return const SurveyResultSkeleton();
+                  }
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return const Center(child: Text('데이터를 불러오는데 실패 했습니다'));
+                  }
 
-                final resultData = snapshot.data!;
+                  final resultData = snapshot.data!;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ///상단 텍스트
-                    _TopText(),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ///상단 텍스트
+                      _TopText(),
 
-                    ///감정 캐릭터 카드 섹션
-                    _CardSection(resultData: resultData),
-                    SizedBox(height: 20.0),
+                      ///감정 캐릭터 카드 섹션
+                      _CardSection(resultData: resultData),
+                      SizedBox(height: 20.0),
 
-                    /// 하단 설명글 섹션
-                    _BottomSection(
-                      resultData: resultData,
-                      onNextPressed: () {
-                        Navigator.of(
-                          context,
-                        ).push(MaterialPageRoute(builder: (_) => HomeScreen(resultData: resultData)));
-                      },
-                    ),
-                  ],
-                );
-              },
+                      /// 하단 설명글 섹션
+                      _BottomSection(
+                        resultData: resultData,
+                        onNextPressed: () {
+                          Navigator.of(
+                            context,
+                          ).push(MaterialPageRoute(builder: (_) => HomeScreen(resultData: resultData)));
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -96,10 +98,10 @@ class _TopText extends StatelessWidget {
           '"당신의 마음에 귀 기울여봤어요"',
           style: mediumText?.copyWith(
             fontWeight: FontWeight.w600,
-            fontSize: 25,
+            fontSize: 21,
           ),
         ),
-        const SizedBox(height: 50),
+        const SizedBox(height: 40),
       ],
     );
   }
@@ -143,7 +145,7 @@ class _CardSection extends StatelessWidget {
               Text(
                 '당신의 감정 캐릭터',
                 style: mediumText?.copyWith(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -159,7 +161,7 @@ class _CardSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       resultData.characterName,
-                      style: mediumText,
+                      style: mediumText?.copyWith(fontSize: 20, color: Color(0XFF6D7AC9)),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -198,7 +200,7 @@ class _CardSection extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 10),
                           Text('${e.value}%'),
                         ],
                       ),
@@ -237,7 +239,7 @@ class _BottomSection extends StatelessWidget {
           child: Text(
             resultData.explanationText ?? '결과 설명이 없습니다.',
             textAlign: TextAlign.center,
-            style: mediumText?.copyWith(color: Colors.grey, fontSize: 18),
+            style: mediumText?.copyWith(color: Colors.black.withOpacity(0.6), fontSize: 18,letterSpacing: 0.5),
           ),
         ),
         const SizedBox(height: 20),

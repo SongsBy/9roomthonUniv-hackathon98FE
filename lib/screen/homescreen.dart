@@ -8,7 +8,6 @@ import 'package:remind/repository/FeedbackRepository.dart';
 import 'package:remind/screen/meeting_ListScreen.dart';
 import '../const/color.dart';
 
-
 class HomeScreen extends StatefulWidget {
   final EnergyStat resultData;
 
@@ -28,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isProcessing = false;
   List<FeedbackCardModel> _feedbackData = [];
 
+
+  Color _bgColor = const Color(0xFFFAFAFA);
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -41,6 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedMood = mood;
       _isProcessing = true;
       _feedbackData = [];
+
+      _bgColor = Color.alphaBlend(mood.color.withOpacity(0.6), Colors.white);
     });
 
     await Future.delayed(const Duration(milliseconds: 300));
@@ -50,69 +54,64 @@ class _HomeScreenState extends State<HomeScreen> {
       curve: Curves.easeInOut,
     );
 
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     final repository = GetIt.I<FeedbackRepository>();
     final feedbacks = repository.getFeedbacksForMood(mood);
 
     setState(() {
       _feedbackData = feedbacks;
+      _isProcessing = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:  Color(0XFFFAFAFA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ///상단 프로필 카드
-              _TopProfile(resultData: widget.resultData),
-              ///기분 선택 위젯
-              _MoodSelectionSection(
-                isProcessing: _isProcessing,
-                onMoodSelected: onMoodSelected,
-              ),
-                ///주변 모임 버튼
-                _Button(onPressed: onMeetingPressed),
-                SizedBox(height: 50),
-              Padding(
-                key: _feedbackKey,
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
-                child:
-                /// 기분 클릭시 피드백 카드 섹션
-                _FeedbackSection(
-                    feedbackData:
-                    _feedbackData),
-              ),
-               SizedBox(height: 50),
-            ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOut,
+      color: _bgColor,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// 상단 프로필 카드
+                _TopProfile(resultData: widget.resultData),
+                SizedBox(height: 20,),
+                _Button(onPressed: onMeetingPressed, color: _selectedMood?.color ?? Colors.grey,),
+
+                /// 기분 선택 위젯 (퍼스널 컬러 선택)
+                _MoodSelectionSection(
+                  isProcessing: _isProcessing,
+                  onMoodSelected: onMoodSelected,
+                ),
+
+
+                Padding(
+                  key: _feedbackKey,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: _FeedbackSection(feedbackData: _feedbackData),
+                ),
+                const SizedBox(height: 10),
+                /// 주변 모임 버튼
+
+                const SizedBox(height: 50),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-  void onMeetingPressed(){
+
+  void onMeetingPressed() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetingListscreen()));
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// 상단 프로필 카드
 class _TopProfile extends StatelessWidget {
@@ -138,18 +137,21 @@ class _TopProfile extends StatelessWidget {
             height: 400,
             child: Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-              elevation: 14,
+              elevation: 8,
               color: Colors.white,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(resultData.characterImagePath, width: 170, height: 170),
-                   SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Text(
                     resultData.characterName,
                     textAlign: TextAlign.center,
                     style: mediumText?.copyWith(
-                        fontSize: 24, color: Color(0XFF6D7AC9), fontWeight: FontWeight.w600),
+                      fontSize: 24,
+                      color: const Color(0XFF6D7AC9),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -165,7 +167,11 @@ class _TopProfile extends StatelessWidget {
 class _MoodSelectionSection extends StatelessWidget {
   final bool isProcessing;
   final OnMoodSelected onMoodSelected;
-  const _MoodSelectionSection({required this.isProcessing, required this.onMoodSelected, super.key});
+  const _MoodSelectionSection({
+    required this.isProcessing,
+    required this.onMoodSelected,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -173,21 +179,20 @@ class _MoodSelectionSection extends StatelessWidget {
       padding: const EdgeInsets.all(24.0),
       child: AbsorbPointer(
         absorbing: isProcessing,
-        child: MoodSelector(
-          onMoodSelected: onMoodSelected,
-        ),
+        child: MoodSelector(onMoodSelected: onMoodSelected),
       ),
     );
   }
 }
 
-/// 모임 가긱 버튼
+/// 모임 가기 버튼
 class _Button extends StatelessWidget {
+  final Color color;
   final VoidCallback onPressed;
   const _Button({
     required this.onPressed,
-    super.key
-  });
+    required this.color,
+    super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -196,24 +201,24 @@ class _Button extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
     );
     return Center(
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          shape: baseButtonStyle,
-          padding: EdgeInsets.symmetric(horizontal: 134, vertical: 17),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          '내 주면 모임',
-          style: (mediumText ?? const TextStyle(fontSize: 20)).copyWith(
-            color: Colors.white,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black,
+          side: BorderSide(
+            color: Colors.black,
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
+        onPressed: onPressed,
+        child: const Text('내 주변 모임 바로가기 '),
       ),
     );
   }
 }
-
 
 /// 피드백 카드 섹션
 class _FeedbackSection extends StatelessWidget {
@@ -225,26 +230,35 @@ class _FeedbackSection extends StatelessWidget {
     return Column(
       children: [
         AnimatedOpacity(
-          duration:  Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           opacity: feedbackData.isNotEmpty ? 1.0 : 0.0,
           child: _FeedbackCard(
-              data: feedbackData.isNotEmpty ? feedbackData[0] : FeedbackCardModel.empty()),
+            data: feedbackData.isNotEmpty
+                ? feedbackData[0]
+                : FeedbackCardModel.empty(),
+          ),
         ),
-         SizedBox(height: 16),
+        const SizedBox(height: 16),
         AnimatedOpacity(
-          duration:  Duration(milliseconds: 500),
-          curve:  Interval(0.3, 1.0),
+          duration: const Duration(milliseconds: 500),
+          curve: const Interval(0.3, 1.0),
           opacity: feedbackData.length > 1 ? 1.0 : 0.0,
           child: _FeedbackCard(
-              data: feedbackData.length > 1 ? feedbackData[1] : FeedbackCardModel.empty()),
+            data: feedbackData.length > 1
+                ? feedbackData[1]
+                : FeedbackCardModel.empty(),
+          ),
         ),
-         SizedBox(height: 16),
+        const SizedBox(height: 16),
         AnimatedOpacity(
-          duration:  Duration(milliseconds: 500),
-          curve:  Interval(0.6, 1.0),
+          duration: const Duration(milliseconds: 500),
+          curve: const Interval(0.6, 1.0),
           opacity: feedbackData.length > 2 ? 1.0 : 0.0,
           child: _FeedbackCard(
-              data: feedbackData.length > 2 ? feedbackData[2] : FeedbackCardModel.empty()),
+            data: feedbackData.length > 2
+                ? feedbackData[2]
+                : FeedbackCardModel.empty(),
+          ),
         ),
       ],
     );
@@ -267,21 +281,15 @@ class _FeedbackCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              data.header,
-              style: TextStyle(
-                  color: Colors.blueAccent, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              data.title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 4),
-            Text(
-              data.subtitle,
-              style: TextStyle(color: Colors.black54),
-            ),
+            Text(data.header,
+                style: const TextStyle(
+                    color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(data.title,
+                style:
+                const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(data.subtitle, style: const TextStyle(color: Colors.black54)),
           ],
         ),
       ),

@@ -101,7 +101,6 @@ class _Top extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mediumText = Theme.of(context).textTheme.displayMedium;
-    final largeText = Theme.of(context).textTheme.displayLarge;
     final titleLarge = Theme.of(context).textTheme.titleLarge;
     final padding = SizedBox(height: 10);
     return Column(

@@ -1,3 +1,6 @@
+// lib/screen/meeting_ListScreen.dart
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get_it/get_it.dart';
@@ -19,26 +22,41 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
   late GoogleMapController _mapController;
   final PanelController _panelController = PanelController();
 
+
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
+  double _panelPos = 0.0;
+
   @override
   void initState() {
     super.initState();
     dataFuture = fetchData();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _query = _searchCtrl.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<Map<String, dynamic>> fetchData() async {
     await checkPermission();
-
     final position = await Geolocator.getCurrentPosition();
 
-    final allMeetings =
-    await GetIt.I<MeetingRepository>().fetchMeetingsStatically(
+    final allMeetings = await GetIt.I<MeetingRepository>().fetchMeetingsStatically(
       latitude: position.latitude,
       longitude: position.longitude,
     );
 
-    const double maxDistanceInMeters = 3000.0;
 
-    final filteredMeetings = allMeetings.where((meeting) {
+    const double maxDistanceInMeters = 3000.0;
+    final filteredByRadius = allMeetings.where((meeting) {
       final distance = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
@@ -50,51 +68,66 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
 
     return {
       'position': position,
-      'meetings': filteredMeetings,
+      'meetings': filteredByRadius,
     };
   }
 
   Future<void> checkPermission() async {
-    final isLocationEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!isLocationEnabled) {
+    final enabled = await Geolocator.isLocationServiceEnabled();
+    if (!enabled) {
       throw Exception('위치 서비스를 활성화해주세요.');
     }
-    LocationPermission checkLocationPermission =
-    await Geolocator.checkPermission();
-    if (checkLocationPermission == LocationPermission.denied) {
-      checkLocationPermission = await Geolocator.requestPermission();
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
     }
-    if (checkLocationPermission != LocationPermission.always &&
-        checkLocationPermission != LocationPermission.whileInUse) {
+    if (perm != LocationPermission.always && perm != LocationPermission.whileInUse) {
       throw Exception('위치 권한을 허가해 주세요.');
     }
   }
 
   void _goToMyLocation() async {
     try {
-      final Position position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition();
       _mapController.animateCamera(
         CameraUpdate.newLatLng(
           LatLng(position.latitude, position.longitude),
         ),
       );
     } catch (e) {
-      // ignore: avoid_print
+
       print('현재 위치를 가져오는 데 실패했습니다: $e');
     }
   }
 
+  List<MeetingListCardModel> _applySearch(List<MeetingListCardModel> meetings) {
+    if (_query.isEmpty) return meetings;
+    final q = _query.toLowerCase();
+    return meetings.where((m) {
+      final t = m.title.toLowerCase();
+      final p = m.place.toLowerCase();
+      return t.contains(q) || p.contains(q);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final size = MediaQuery.of(context).size;
+
+
+    final double mapScale = 1.0 - 0.06 * _panelPos;
+    final double mapTranslateY = -24.0 * _panelPos;
+
+
+    final double fabBottomStart = 140.0;
+    final double fabBottomEndExtra = 220.0;
+    final double fabBottom = lerpDouble(
+      fabBottomStart,
+      fabBottomStart + fabBottomEndExtra,
+      _panelPos.clamp(0.0, 0.5) / 0.5,
+    )!;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          '모임 찾기',
-          style: textTheme.titleMedium?.copyWith(fontSize: 20),
-        ),
-      ),
       backgroundColor: Colors.white,
       body: FutureBuilder<Map<String, dynamic>>(
         future: dataFuture,
@@ -107,21 +140,23 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
           }
 
           final position = snapshot.data!['position'] as Position;
-          final meetings =
-          snapshot.data!['meetings'] as List<MeetingListCardModel>;
+          final meetings = snapshot.data!['meetings'] as List<MeetingListCardModel>;
+
+
+          final searched = _applySearch(meetings);
 
           final initialCameraPosition = CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 15,
+            zoom: 13.7,
           );
 
-          final markers = meetings
+
+          final markers = searched
               .map(
                 (meeting) => Marker(
               markerId: MarkerId(meeting.id),
               position: LatLng(meeting.latitude, meeting.longitude),
-              infoWindow:
-              InfoWindow(title: meeting.title, snippet: meeting.place),
+              infoWindow: InfoWindow(title: meeting.title, snippet: meeting.place),
               onTap: () async {
                 await Future.delayed(const Duration(milliseconds: 300));
                 if (_panelController.isAttached) {
@@ -143,32 +178,112 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
             )
           };
 
+          final double panelMaxHeight = size.height * 0.8;
+
           return SlidingUpPanel(
             controller: _panelController,
             color: const Color(0XFFFAFAFA),
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
+            maxHeight: panelMaxHeight,
             minHeight: 120.0,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(24.0),
-              topRight: Radius.circular(24.0),
-            ),
-            panel: _buildPanelContent(meetings),
+            panelSnapping: true,
+            snapPoint: 0.5,
+            parallaxEnabled: true,
+            parallaxOffset: .18,
+
+
+            panel: _buildPanelContent(searched),
+
+
             body: Stack(
               children: [
-                SafeArea(
-                  child: GoogleMap(
-                    initialCameraPosition: initialCameraPosition,
-                    myLocationEnabled: true,
-                    myLocationButtonEnabled: false,
-                    onMapCreated: (GoogleMapController controller) {
-                      _mapController = controller;
-                    },
-                    markers: markers,
-                    circles: circles,
+
+                Transform.translate(
+                  offset: Offset(0, mapTranslateY),
+                  child: Transform.scale(
+                    scale: mapScale,
+                    child: GoogleMap(
+                      initialCameraPosition: initialCameraPosition,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: false,
+                      onMapCreated: (GoogleMapController controller) {
+                        _mapController = controller;
+                      },
+                      markers: markers,
+                      circles: circles,
+                    ),
                   ),
                 ),
-                Positioned(
-                  bottom: 250,
+
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: Row(
+                      children: [
+                        Material(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          elevation: 2,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => Navigator.pop(context),
+                            child: const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Icon(Icons.arrow_back, color: Colors.black),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        Expanded(
+                          child: Material(
+                            elevation: 2,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 12),
+                                  const Icon(Icons.search, color: Colors.black54),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchCtrl,
+                                      textInputAction: TextInputAction.search,
+                                      decoration: const InputDecoration(
+                                        hintText: '제목 또는 장소로 검색',
+                                        border: InputBorder.none,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_query.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.close, size: 18),
+                                      color: Colors.black54,
+                                      onPressed: () {
+                                        _searchCtrl.clear();
+                                        FocusScope.of(context).unfocus();
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOut,
+                  bottom: fabBottom,
                   right: 16,
                   child: FloatingActionButton(
                     backgroundColor: Colors.white,
@@ -179,6 +294,13 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
                 ),
               ],
             ),
+
+
+            onPanelSlide: (pos) {
+              setState(() {
+                _panelPos = pos;
+              });
+            },
           );
         },
       ),
@@ -192,7 +314,7 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 드래그 핸들
+
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -206,7 +328,7 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
               ),
             ),
           ),
-           SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             '내 주변 모임',
             style: textTheme.titleMedium?.copyWith(
@@ -214,19 +336,28 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-           SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-          // 리스트는 반드시 Expanded로 감싸기
           Expanded(
             child: meetings.isEmpty
-                ? const Center(child: Text('주변 3km 이내에 모임이 없습니다.'))
+                ? const Center(child: Text('조건에 맞는 모임이 없습니다.'))
                 : ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: meetings.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final meeting = meetings[index];
-                return _MeetingCard(meeting: meeting);
+                final m = meetings[index];
+                return MeetingCardPro(
+                  m: m,
+                  favorite: index.isEven,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => MeetingDetailScreen(meetingId: m.id),
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -236,84 +367,208 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
   }
 }
 
-class _MeetingCard extends StatelessWidget {
-  final MeetingListCardModel meeting;
-  const _MeetingCard({required this.meeting, super.key});
+/// 리디자인 카드 위젯
+class MeetingCardPro extends StatelessWidget {
+  final MeetingListCardModel m;
+  final VoidCallback onTap;
+  final bool favorite;
+  const MeetingCardPro({
+    super.key,
+    required this.m,
+    required this.onTap,
+    this.favorite = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context).textTheme;
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => MeetingDetailScreen(meetingId: meeting.id),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF7F5FF), Color(0xFFFDFDFF)],
           ),
-        );
-      },
-      child: Card(
-        color: Colors.white,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 썸네일
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6D7AC9).withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 썸네일
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipOval(
                 child: Image.asset(
-                  meeting.imagePath,
-                  width: 80,
-                  height: 80,
+                  m.imagePath,
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 12),
+            ),
+            const SizedBox(width: 14),
 
-              // 오른쪽 정보 - 남은 가로폭을 받도록 Expanded
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // 필요 이상 커지지 않도록
-                  children: [
-                    Text(
-                      meeting.title,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color:  Color(0xFF6D7AC9),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          m.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.titleMedium?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF5660C8),
+                          ),
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      '장소 : ${meeting.place}',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[700],
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12.withOpacity(0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          favorite ? Icons.favorite : Icons.favorite_border,
+                          color: favorite ? const Color(0xFFE25A7B) : Colors.black38,
+                          size: 20,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '시간 : ${meeting.time}',
-                      style: textTheme.bodyMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+
+                  _MetaRow(icon: Icons.place_rounded, text: m.place),
+                  const SizedBox(height: 2),
+
+
+                  _MetaRow(icon: Icons.access_time_rounded, text: m.time),
+
+                  const SizedBox(height: 10),
+
+
+                  Row(
+                    children: [
+                      const _Chip(text: '거리 ~3km', icon: Icons.near_me_outlined),
+                      const SizedBox(width: 6),
+                      const Spacer(),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF6D7AC9), width: 1.3),
+                          foregroundColor: const Color(0xFF6D7AC9),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: onTap,
+                        child: const Text('자세히 보기'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _MetaRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: Colors.black87,
+      height: 1.2,
+    );
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.black45),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  const _Chip({required this.text, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE5E7FB)),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF6D7AC9)),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Color(0xFF4E56B9),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -16,23 +16,19 @@ class MeetingListscreen extends StatefulWidget {
 
 class _MeetingListscreenState extends State<MeetingListscreen> {
   late final Future<Map<String, dynamic>> dataFuture;
-
   late GoogleMapController _mapController;
   final PanelController _panelController = PanelController();
 
   @override
   void initState() {
     super.initState();
-
     dataFuture = fetchData();
   }
 
-
   Future<Map<String, dynamic>> fetchData() async {
-    await checkPermission(); // 권한 확인을 기다림
+    await checkPermission();
 
     final position = await Geolocator.getCurrentPosition();
-
 
     final allMeetings =
     await GetIt.I<MeetingRepository>().fetchMeetingsStatically(
@@ -41,7 +37,6 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
     );
 
     const double maxDistanceInMeters = 3000.0;
-
 
     final filteredMeetings = allMeetings.where((meeting) {
       final distance = Geolocator.distanceBetween(
@@ -52,8 +47,6 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
       );
       return distance <= maxDistanceInMeters;
     }).toList();
-
-
 
     return {
       'position': position,
@@ -77,7 +70,6 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
     }
   }
 
-
   void _goToMyLocation() async {
     try {
       final Position position = await Geolocator.getCurrentPosition();
@@ -87,17 +79,21 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
         ),
       );
     } catch (e) {
+      // ignore: avoid_print
       print('현재 위치를 가져오는 데 실패했습니다: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final mediumText = Theme.of(context).textTheme.displayMedium;
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('모임 찾기 ',style: mediumText?.copyWith(fontSize: 20),),
+        title: Text(
+          '모임 찾기',
+          style: textTheme.titleMedium?.copyWith(fontSize: 20),
+        ),
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<Map<String, dynamic>>(
@@ -116,25 +112,23 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
 
           final initialCameraPosition = CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 13.4,
+            zoom: 15,
           );
 
           final markers = meetings
-              .map((meeting) => Marker(
-            markerId: MarkerId(meeting.id),
-            position: LatLng(meeting.latitude, meeting.longitude),
-            infoWindow:
-            InfoWindow(
-                title: meeting.title,
-                snippet: meeting.place
+              .map(
+                (meeting) => Marker(
+              markerId: MarkerId(meeting.id),
+              position: LatLng(meeting.latitude, meeting.longitude),
+              infoWindow:
+              InfoWindow(title: meeting.title, snippet: meeting.place),
+              onTap: () async {
+                await Future.delayed(const Duration(milliseconds: 300));
+                if (_panelController.isAttached) {
+                  _panelController.open();
+                }
+              },
             ),
-            onTap: ()async {
-              await Future.delayed(Duration(milliseconds: 600));
-              if (_panelController.isAttached) {
-                _panelController.open();
-              }
-            },
-          ),
           )
               .toSet();
 
@@ -192,12 +186,13 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
   }
 
   Widget _buildPanelContent(List<MeetingListCardModel> meetings) {
-    final mediumText = Theme.of(context).textTheme.displayMedium;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 드래그 핸들
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -211,17 +206,24 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Text('내 주변 모임',
-              style: mediumText?.copyWith(
-                  fontSize: 22, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 20),
+           SizedBox(height: 12),
+          Text(
+            '내 주변 모임',
+            style: textTheme.titleMedium?.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+           SizedBox(height: 12),
+
+          // 리스트는 반드시 Expanded로 감싸기
           Expanded(
             child: meetings.isEmpty
-                ? Center(child: Text('주변 3km 이내에 모임이 없습니다.'))
-                : ListView.builder(
+                ? const Center(child: Text('주변 3km 이내에 모임이 없습니다.'))
+                : ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: meetings.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final meeting = meetings[index];
                 return _MeetingCard(meeting: meeting);
@@ -240,47 +242,77 @@ class _MeetingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mediumText = Theme.of(context).textTheme.displayMedium;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: SizedBox(
-        height: 140,
-        child: GestureDetector(
-          onTap: (){Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetingDetailScreen(meetingId: meeting.id)));},
-          child: Card(
-              color: Colors.white,
-              elevation: 12,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32)),
-              child: Row(
-                children: [
-                  const SizedBox(width: 20),
-                  Image.asset(
-                    meeting.imagePath,
-                    width: 100,
-                    height: 100,
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          meeting.title,
-                          style: mediumText?.copyWith(
-                            fontWeight: FontWeight.w700,
-                              fontSize: 19, color: const Color(0XFF6D7AC9)),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text('장소 : ${meeting.place}',
-                            style: mediumText?.copyWith(color: Colors.grey)),
-                        Text('시간 : ${meeting.time}', style: mediumText),
-                      ],
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MeetingDetailScreen(meetingId: meeting.id),
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.white,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 썸네일
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  meeting.imagePath,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // 오른쪽 정보 - 남은 가로폭을 받도록 Expanded
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // 필요 이상 커지지 않도록
+                  children: [
+                    Text(
+                      meeting.title,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color:  Color(0xFF6D7AC9),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
                     ),
-                  )
-                ],
-              )),
+                    SizedBox(height: 6),
+                    Text(
+                      '장소 : ${meeting.place}',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '시간 : ${meeting.time}',
+                      style: textTheme.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

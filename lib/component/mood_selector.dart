@@ -19,11 +19,11 @@ class MoodSelector extends StatefulWidget {
 
 class _MoodSelectorState extends State<MoodSelector> {
   final List<Mood> moods =  [
-    Mood(label: '매우 좋아요', color: Colors.green, moodText: '최고의 하루! 이 기분 만끽해요.'),
-    Mood(label: '좋아요', color: Colors.lightGreen, moodText: '	수고했어요, 당신의 멋진 하루!'),
-    Mood(label: '보통', color: Colors.amber,moodText: '무탈한 하루, 잠시 숨을 골라보세요.'),
-    Mood(label: '나빠요', color: Colors.orange, moodText: '힘든 하루였죠? 당신 탓이 아니에요.'),
-    Mood(label: '매우 나빠요', color: Colors.red, moodText: '억지로 힘내지 않아도 괜찮아요.'),
+    Mood(label: '매우 좋아요', color: 	Color(0xFFB2DFDB), moodText: '최고의 하루! 이 기분 만끽해요.'),
+    Mood(label: '좋아요', color: Color(0xFFFFE0B2), moodText: '	수고했어요, 당신의 멋진 하루!'),
+    Mood(label: '보통', color: Color(0xFFD1C4E9),moodText: '무탈한 하루, 잠시 숨을 골라보세요.'),
+    Mood(label: '나빠요', color: Color(0xFFB3E5FC), moodText: '힘든 하루였죠? 당신 탓이 아니에요.'),
+    Mood(label: '매우 나빠요', color: Color(0xFFCFD8DC), moodText: '억지로 힘내지 않아도 괜찮아요.'),
   ];
 
   int? selectedIndex;

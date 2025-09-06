@@ -6,13 +6,13 @@ import 'package:remind/model/meeting_list_card_model.dart';
 List<MeetingDetailModel> _dummyDetails = [
   MeetingDetailModel(
     id: '1',
-    title: '같이 농구할 사람!',
+    title: '오리고기 먹을사람 ',
     imagePath: 'assets/img/turtle.png',
     time: '오늘 18:00',
-    place: '중앙공원 농구장',
-    latitude: 37.3351,
-    longitude: 126.7285,
-    fullDescription: '오늘 저녁 6시에 중앙공원 농구장에서 같이 농구하실 분 구합니다. 초보도 환영!',
+    place: '카타쯔무리 앞',
+    latitude: 37.58379,
+    longitude: 126.9232,
+    fullDescription: '오리 좋아하는 사람 손!!',
   ),
   MeetingDetailModel(
     id: '2',
@@ -20,8 +20,8 @@ List<MeetingDetailModel> _dummyDetails = [
     imagePath: 'assets/img/koala.png',
     time: '오늘 19:00',
     place: 'E동 학생식당',
-    latitude: 37.3402,
-    longitude: 126.7331,
+    latitude: 37.58275,
+    longitude: 126.9195,
     fullDescription: 'E동 학생식당에서 7시에 저녁 같이 드실 분 구해요!',
   ),
   MeetingDetailModel(
@@ -30,8 +30,8 @@ List<MeetingDetailModel> _dummyDetails = [
     imagePath: 'assets/img/hedgehog.png',
     time: '매주 토요일 14:00',
     place: 'TIP 1층 카페',
-    latitude: 37.3445,
-    longitude: 126.7380,
+    latitude: 37.58180,
+    longitude: 126.9139,
     fullDescription: 'TIP 1층 카페에서 매주 토요일 오후 2시에 모여서 함께 공부합니다. 초보자, 숙련자 모두 환영합니다!',
   ),
 ];
@@ -89,8 +89,8 @@ class MeetingRepository {
         imagePath: 'assets/img/turtle.png',
         time: '오늘 18:00',
         place: '중앙공원 농구장',
-        latitude: 37.36479,
-        longitude: 126.9354,
+        latitude: 37.58379,
+        longitude: 126.9232,
       ),
       MeetingListCardModel(
         id: '2',
@@ -98,8 +98,8 @@ class MeetingRepository {
         imagePath: 'assets/img/koala.png',
         time: '오늘 19:00',
         place: 'E동 학생식당',
-        latitude: 37.35161,
-        longitude: 126.9412,
+        latitude: 37.58253,
+        longitude: 126.9263,
       ),
       MeetingListCardModel(
         id: '3',
@@ -107,8 +107,8 @@ class MeetingRepository {
         imagePath: 'assets/img/hedgehog.png',
         time: '매주 토요일 14:00',
         place: 'TIP 1층 카페',
-        latitude: 37.3445,
-        longitude: 126.7380,
+        latitude: 37.58180,
+        longitude: 126.9139,
       ),
     ];
   }

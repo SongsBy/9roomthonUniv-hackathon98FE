@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.delayed(const Duration(seconds: 1));
 
     final repository = GetIt.I<FeedbackRepository>();
-    final feedbacks = repository.cardDataList;
+    final feedbacks = repository.getFeedbacksForMood(mood);
 
     setState(() {
       _feedbackData = feedbacks;

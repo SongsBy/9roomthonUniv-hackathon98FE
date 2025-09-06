@@ -174,10 +174,11 @@ class _MeetingListscreenState extends State<MeetingListscreen> {
                   ),
                 ),
                 Positioned(
-                  bottom: 140,
+                  bottom: 250,
                   right: 16,
                   child: FloatingActionButton(
                     backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
                     onPressed: _goToMyLocation,
                     child: const Icon(Icons.my_location),
                   ),

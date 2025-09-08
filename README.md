@@ -1,9 +1,13 @@
 # remind
 
 ## REMIND앱 : 98팀 해커톤 
+
+## 구조
+  - lib
+main.dart
 - Model
   - agreement_model.dart
-  - energy+stat_model.dart
+  - energy_stat_model.dart
   - feedback_card_model.dart
   - meeting_datail_model.dart
   - meeting_List_card_model.dart
@@ -28,5 +32,17 @@
   - signinScreen.dart
   - splash_screen.dart
   - stratGate_screen.dart
-  - 
+  - survey_screen.dart
+  - type_setting_gate_screen.dart
 - const
+  - color.dart
+- core
+  - app_theme_controller.dart
+ 
+## Useed Plugin
+- get_it
+- shimmer
+- google_maps_flutter
+- geolocator
+- slidong_up_panel
+- dio

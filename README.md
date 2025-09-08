@@ -107,11 +107,6 @@ lib/
 - **[dio](https://pub.dev/packages/dio)** → HTTP 클라이언트 (API 통신)  
 
 ---
-
-👉 이렇게 `README.md`에 추가하면 프로젝트의 구조와 기술 스택을 심사위원이나 협업자들이 빠르게 이해할 수 있어요.  
-
-혹시 제가 **프로젝트 개요 + 주요 기능 + 폴더 구조 + 사용 플러그인**을 모두 합쳐서 하나의 완성된 README 템플릿으로 만들어드릴까요?
-
 ### Backend (Mock 기반 준비)
 - Node.js / Spring (연동 예정)  
 - 현재는 **Dio + 더미 JSON 기반 mock data**  

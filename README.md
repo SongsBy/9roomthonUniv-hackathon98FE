@@ -3,8 +3,9 @@
 ## REMIND앱 : 98팀 해커톤 
 
 ## 구조
-  - lib
-main.dart
+- lib
+
+- main.dart
 - Model
   - agreement_model.dart
   - energy_stat_model.dart

@@ -47,6 +47,7 @@
 
 ---
 ## 📂 프로젝트 구조
+```
 lib/
 ├── main.dart                  # 앱 진입점
 ├── model/                     # 데이터 모델 정의
@@ -87,6 +88,7 @@ lib/
 │
 └── core/                      # 앱 핵심 로직 (DI, 테마 등)
 └── app_theme_controller.dart
+```
 ---
 ## 🛠️ 기술 스택
 

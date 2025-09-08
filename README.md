@@ -29,7 +29,7 @@
 
 ### 3. 감정 프로필
 - 설문 결과를 캐릭터 + 이름으로 시각화  
-- `"송정훈 님의 마음 프로필"` 처럼 개인화된 결과 화면  
+- `"000 님의 마음 프로필"` 처럼 개인화된 결과 화면  
 
 ### 4. 피드백 카드
 - 오늘 감정에 맞춘 2~3개의 피드백 카드 제공  
@@ -46,16 +46,69 @@
 - 모임 설명, 시간/장소, 참여 정보  
 
 ---
-
+## 📂 프로젝트 구조
+lib/
+├── main.dart                  # 앱 진입점
+├── model/                     # 데이터 모델 정의
+│    ├── agreement_model.dart
+│    ├── energy_stat_model.dart
+│    ├── feedback_card_model.dart
+│    ├── meeting_detail_model.dart
+│    ├── meeting_list_card_model.dart
+│    ├── mood_model.dart
+│    ├── signin_field_model.dart
+│    └── survey_question_model.dart
+│
+├── component/                 # 재사용 가능한 위젯 컴포넌트
+│    ├── feedback_card.dart
+│    ├── mood_selector.dart
+│    └── single_survey_result_skeleton.dart
+│
+├── repository/                # 데이터 및 API 통신 레이어
+│    ├── feedback_repository.dart
+│    ├── meeting_repository.dart
+│    ├── signin_repository.dart
+│    ├── survey_repository.dart
+│    └── survey_result_repository.dart
+│
+├── screen/                    # 주요 화면
+│    ├── home_screen.dart
+│    ├── login_screen.dart
+│    ├── meeting_detail_screen.dart
+│    ├── meeting_list_screen.dart
+│    ├── signin_screen.dart
+│    ├── splash_screen.dart
+│    ├── start_gate_screen.dart
+│    ├── survey_screen.dart
+│    └── type_setting_gate_screen.dart
+│
+├── const/                     # 공통 상수 및 스타일
+│    └── color.dart
+│
+└── core/                      # 앱 핵심 로직 (DI, 테마 등)
+└── app_theme_controller.dart
+---
 ## 🛠️ 기술 스택
 
 ### Frontend
 - Flutter (Dart)  
 - **UI 라이브러리**  
-  - google_maps_flutter (지도)  
-  - sliding_up_panel (슬라이딩 패널)  
-  - dio (API 통신)  
-  - get_it (DI, 상태 주입)  
+---
+
+## 🔌 사용된 주요 플러그인 (Dependencies)
+
+- **[get_it](https://pub.dev/packages/get_it)** → 의존성 주입 (DI) 컨테이너  
+- **[shimmer](https://pub.dev/packages/shimmer)** → 로딩 상태 애니메이션 효과  
+- **[google_maps_flutter](https://pub.dev/packages/google_maps_flutter)** → 지도 UI 렌더링  
+- **[geolocator](https://pub.dev/packages/geolocator)** → 위치 정보 및 거리 계산  
+- **[sliding_up_panel](https://pub.dev/packages/sliding_up_panel)** → 지도 위 패널 슬라이딩 UI  
+- **[dio](https://pub.dev/packages/dio)** → HTTP 클라이언트 (API 통신)  
+
+---
+
+👉 이렇게 `README.md`에 추가하면 프로젝트의 구조와 기술 스택을 심사위원이나 협업자들이 빠르게 이해할 수 있어요.  
+
+혹시 제가 **프로젝트 개요 + 주요 기능 + 폴더 구조 + 사용 플러그인**을 모두 합쳐서 하나의 완성된 README 템플릿으로 만들어드릴까요?
 
 ### Backend (Mock 기반 준비)
 - Node.js / Spring (연동 예정)  
